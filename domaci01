@@ -1,0 +1,74 @@
+#include "TXLib.h"
+#include <cmath>
+
+void DrawBall (int x, int y, int r = 0, int red = 0, int green = 0, int blue = 0)
+{
+    for(double k = r; k>0; --k)
+    {
+        txSetFillColor(RGB(red * (1 - pow(k/r, 2)), green * (1 - pow(k/r, 2)), blue * (1 - pow(k/r, 2))));
+        txSetColor(RGB(red * (1 - pow(k/r, 2)), green * (1 - pow(k/r, 2)), blue * (1 - pow(k/r, 2))));
+        txCircle(x + (r - k)/2, y, k);
+    }
+}
+
+int main()
+{
+    txCreateWindow(800, 600);
+
+    const float dt = 0.1;
+    float x = 400;
+    float y = 300;
+    float vx = 20;
+    float vy = 30;
+    int r  = 40;
+
+    for(;;)
+    {
+        if (y > 600 - r || y < r)
+        {
+            vy = (-1) * vy;
+        }
+
+        if (x > 800 - r || x < r)
+        {
+            vx = (-1) * vx;
+        }
+
+        x += vx * dt;
+        y += vy * dt;
+
+        if (GetAsyncKeyState(VK_UP))
+        {
+            vx += 10;
+            vy +=15;
+        }
+
+        if (GetAsyncKeyState(VK_DOWN))
+        {
+            vy += 20;
+            vx += 20;
+        }
+
+        if (GetAsyncKeyState(VK_LEFT))
+        {
+            vx -= 5;
+            vy -= 40;
+        }
+        if (GetAsyncKeyState(VK_RIGHT))
+        {
+            vy -= 15;
+            vx -= 20;
+        }
+
+    txClear();
+
+    DrawBall(x, y, r, 150);
+
+    txSetFillColor(RGB(20, 200, 50));
+
+    txSleep(0.2);
+
+}
+
+    return (0);
+}
