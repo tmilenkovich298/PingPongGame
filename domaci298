@@ -1,0 +1,97 @@
+#include "TXLib.h"
+#include <cmath>
+
+struct Ball
+{
+    float x = 400;
+    float y = 300;
+    float vx = 10;
+    float vy = 3;
+    int r = 30;
+};
+
+void DrawBall (float x, float y, int r = 0, int red = 0, int green = 0, int blue = 0)
+{
+    for(double k = r; k>0; --k)
+    {
+        txSetFillColor(RGB(red * (1 - pow(k/r, 2)), green * (1 - pow(k/r, 2)), blue * (1 - pow(k/r, 2))));
+        txSetColor(RGB(red * (1 - pow(k/r, 2)), green * (1 - pow(k/r, 2)), blue * (1 - pow(k/r, 2))));
+        txCircle(x + (r - k)/2, y, k);
+    }
+}
+
+void ControlBall (float* vx, float* vy)
+{
+    if (GetAsyncKeyState(VK_UP))
+    {
+        *vx += 10;
+        *vy +=15;
+    }
+
+    if (GetAsyncKeyState(VK_DOWN))
+    {
+        *vy += 20;
+        *vx += 20;
+    }
+
+    if (GetAsyncKeyState(VK_LEFT))
+    {
+        *vx -= 50;
+        *vy -= 40;
+    }
+    if (GetAsyncKeyState(VK_RIGHT))
+    {
+        *vy -= 15;
+        *vx -= 20;
+    }
+}
+
+void MoveBall(float* x, float* y, float* vx, float* vy, int r, const float dt)
+{
+    if (*y > 600 - r || *y < r)
+    {
+        *vy = (-1) * *vy;
+    }
+
+    if (*x > 800 - r || *x < r)
+    {
+        *vx = (-1) * *vx;
+    }
+
+    *x += *vx * dt;
+    *y += *vy * dt;
+}
+
+int main()
+{
+    txCreateWindow(800, 600);
+    const float dt = 0.1;
+
+
+    Ball ball1;
+    ball1.x = 50;
+    ball1.y = 400;
+    Ball ball2;
+    ball2.y = 100;
+    ball2.vy = 20;
+    Ball ball3;
+    ball3.x = 200;
+
+    for(;;)
+    {
+        txSetFillColor(RGB(0, 0, 0));
+        txClear();
+        txBegin();
+        DrawBall(ball1.x, ball1.y, ball1.r, 10, 200, 100);
+        DrawBall(ball2.x, ball2.y, ball2.r, 0, 255, 50);
+        DrawBall(ball3.x, ball3.y, ball3.r, 100, 255);
+        txEnd();
+
+        ControlBall(&ball1.vx, &ball1.vy);
+        MoveBall(&ball3.x, &ball3.y, &ball3.vx, &ball3.vy, ball3.r, dt);
+        MoveBall(&ball2.x, &ball2.y, &ball2.vx, &ball2.vy, ball2.r, dt);
+        MoveBall(&ball1.x, &ball1.y, &ball1.vx, &ball1.vy, ball1.r, dt);
+    }
+    
+    return (0);
+}
