@@ -1,0 +1,121 @@
+#include "TXLib.h"
+#include <cmath>
+
+struct Ball
+{
+    float x = 400;
+    float y = 300;
+    float vx = 10;
+    float vy = 3;
+    int r = 20;
+    int red = 0;
+    int green = 255;
+    int blue = 0;
+};
+
+void DrawBall (Ball ball)
+{
+    for(int i = 0; i < 3; ++i)
+    {
+        for(double k = ball.r; k>0; --k)
+        {
+            txSetFillColor(RGB(ball.red * (1 - pow(k/ball.r, 2)), ball.green * (1 - pow(k/ball.r, 2)), ball.blue * (1 - pow(k/ball.r, 2))));
+            txSetColor(RGB(ball.red * (1 - pow(k/ball.r, 2)), ball.green * (1 - pow(k/ball.r, 2)), ball.blue * (1 - pow(k/ball.r, 2))));
+            txCircle(ball.x + (ball.r - k)/2, ball.y, k);
+        }
+    }
+}
+
+void DrawAllBalls(Ball* balls, int k)
+{
+    for(int i = 0; i < k; ++i)
+    {
+        DrawBall(balls[i]);
+    }
+}
+
+void ControlBall (Ball* ball)
+{
+    if (GetAsyncKeyState(VK_UP))
+    {
+        (*ball).vx += 10;
+        (*ball).vy +=15;
+    }
+
+    if (GetAsyncKeyState(VK_DOWN))
+    {
+        (*ball).vx += 20;
+        (*ball).vy += 20;
+    }
+
+    if (GetAsyncKeyState(VK_LEFT))
+    {
+        (*ball).vx -= 50;
+        (*ball).vy -= 40;
+    }
+    if (GetAsyncKeyState(VK_RIGHT))
+    {
+        (*ball).vx -= 15;
+        (*ball).vy -= 20;
+    }
+}
+
+void MoveBall(Ball &ball, const float dt)
+{
+        if (ball.y > 600 - ball.r || ball.y < ball.r)
+        {
+            ball.vy = (-1) * ball.vy;
+        }
+
+        if (ball.x > 800 - ball.r || ball.x < ball.r)
+        {
+            ball.vx = (-1) * ball.vx;
+        }
+
+        ball.x += ball.vx * dt;
+        ball.y += ball.vy * dt;
+}
+
+void MoveAllBalls(Ball* balls)
+{
+    for(int i = 0; i < 3; ++i)
+    {
+        MoveBall(balls[i], 0.1);
+    }
+}
+
+int main()
+{
+    txCreateWindow(800, 600);
+    const float dt = 0.1;
+
+    Ball* balls = new Ball[3];
+
+    Ball ball1;
+    balls[0].x = 50;
+    balls[0].y = 400;
+    balls[0].blue = 100;
+    Ball ball2;
+    balls[1].y = 100;
+    balls[1].vy = 20;
+    balls[1].red = 40;
+    balls[1].green = 60;
+    Ball ball3;
+    balls[2].x = 200;
+    balls[2].green = 200;
+    balls[2].blue = 30;
+
+    for(;;)
+    {
+        txSetFillColor(RGB(0, 76, 90));
+        txClear();
+        txBegin();
+        DrawAllBalls(balls, 10);
+        txEnd();
+        ControlBall(&balls[0]);
+        MoveAllBalls(balls);
+    }
+
+    delete [] balls;
+    return (0);
+}
