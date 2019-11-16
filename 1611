@@ -1,0 +1,192 @@
+#include "TXLib.h"
+#include <cmath>
+#include <iostream>
+
+struct Ball
+{
+    float x = 400;
+    float y = 300;
+    float vx = 20;
+    float vy = 10;
+    int r = 20;
+    int red = 0;
+    int green = 255;
+    int blue = 0;
+};
+
+void DrawBall (Ball ball)
+{
+        for(double k = ball.r; k>0; --k)
+        {
+            txSetFillColor(RGB(ball.red * (1 - pow(k/ball.r, 2)), ball.green * (1 - pow(k/ball.r, 2)), ball.blue * (1 - pow(k/ball.r, 2))));
+            txSetColor(RGB(ball.red * (1 - pow(k/ball.r, 2)), ball.green * (1 - pow(k/ball.r, 2)), ball.blue * (1 - pow(k/ball.r, 2))));
+            txCircle(ball.x + (ball.r - k)/2, ball.y, k);
+        }
+}
+
+void DrawAllBalls(Ball* balls, int k)
+{
+    for(int i = 0; i < k; ++i)
+    {
+        DrawBall(balls[i]);
+    }
+}
+
+void ControlBall (Ball* ball)
+{
+    if (GetAsyncKeyState(VK_UP))
+    {
+        (*ball).vx += 10;
+        (*ball).vy +=15;
+    }
+
+    if (GetAsyncKeyState(VK_DOWN))
+    {
+        (*ball).vx += 20;
+        (*ball).vy += 20;
+    }
+
+    if (GetAsyncKeyState(VK_LEFT))
+    {
+        (*ball).vx -= 50;
+        (*ball).vy -= 40;
+    }
+    if (GetAsyncKeyState(VK_RIGHT))
+    {
+        (*ball).vx -= 15;
+        (*ball).vy -= 20;
+    }
+}
+
+void MoveBall(Ball &ball, const float dt)
+{
+        if (ball.y > 600 - ball.r || ball.y < ball.r)
+        {
+            ball.vy = (-1) * ball.vy;
+        }
+
+        if (ball.x > 800 - ball.r || ball.x < ball.r)
+        {
+            ball.vx = (-1) * ball.vx;
+        }
+
+        ball.x += ball.vx * dt;
+        ball.y += ball.vy * dt;
+}
+
+void MoveAllBalls(Ball* balls, int k)
+{
+    for(int i = 0; i < k; ++i)
+    {
+        MoveBall(balls[i], 0.1);
+    }
+}
+
+bool funkcija1(Ball &ball1, Ball &ball2)
+{
+    double distance = sqrt(pow((ball1.x - ball2.x), 2) + pow((ball1.y - ball2.y), 2));
+    if (distance <= ball1.r + ball2.r)
+        {
+            return true;
+        }
+    if (distance > ball1.r + ball2.r)
+        {
+            return false;
+        }
+
+    //return distance <= ball1.r + ball2.r;
+}
+
+void funkcija2(Ball* ball1, Ball &ball2)
+{
+    std::cout << "vx before = " << ball1->vx << std::endl;
+
+    ball1->vx = (-1) * ball1->vx;
+    ball2.vx = (-1) * ball2.vx;
+
+    ball1->vy = (-1) * ball1->vy;
+    ball2.vy = (-1) * ball2.vy;
+}
+
+int main()
+{
+    txCreateWindow(800, 600);
+    const float dt = 0.1;
+
+    Ball* balls = new Ball[9];
+
+    Ball ball1;
+    balls[0].x = 150;
+    balls[0].y = 400;
+    balls[0].vx = 20;
+    balls[0].blue = 100;
+    Ball ball2;
+    balls[1].x = 200;
+    balls[1].y = rand() % 50;
+    balls[1].vx = -20;
+    balls[1].red = 40;
+    balls[1].green = 60;
+    Ball ball3;
+    balls[2].x = 300;
+    balls[2].y = rand() % 50;
+    balls[2].green = 200;
+    balls[2].blue = 30;
+    Ball ball4;
+    balls[3].vx = rand() % 50;
+    Ball ball5;
+    balls[4].vx = rand() % 50;
+    balls[4].x = 40;
+    balls[4].red = 100;
+    Ball ball6;
+    balls[5].vx = rand() % 50;
+    balls[5].y = rand() % 50;
+    balls[5].red = 100;
+    balls[5].green = 150;
+    Ball ball7;
+    balls[6].vx = rand() % 50;
+    balls[6].vy = rand() % 50;
+    balls[6].x = 500;
+    balls[6].y = 150;
+    balls[6].blue = 200;
+    Ball ball8;
+    balls[7].vy = rand() % 50;
+    balls[7].x = 450;
+    balls[7].y = 100;
+    balls[7].red = 100;
+    balls[7].blue = 100;
+    Ball ball9;
+    balls[8].vy = rand() % 50;
+    balls[8].y = 200;
+    balls[8].red = 255;
+    
+    for(int k = 0; k < 1000; k++)
+    {
+        txSetFillColor(RGB(0, 76, 90));
+        txClear();
+        txBegin();
+        DrawAllBalls(balls, 9);
+        txEnd();
+        //ControlBall(&balls[0]);
+        MoveAllBalls(balls, 9);
+
+        std::cout << "vx0 = " << balls[0].vx << std::endl;
+
+        for(int i = 0; i < 9; i++)
+        {
+            for(int j = i; j < 9; j++)
+            {
+                if (i == j)
+                    continue;
+
+                if(funkcija1(balls[i], balls[j]))
+                {
+                    funkcija2(&balls[i], balls[j]);
+                    std::cout << "vx after = " << balls[i].vx << std::endl;
+                }
+            }
+        }
+    }
+
+    delete [] balls;
+    return (0);
+}
