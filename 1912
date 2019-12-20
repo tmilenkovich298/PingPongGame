@@ -1,0 +1,217 @@
+#include "TXLib.h"
+#include <cmath>
+#include <iostream>
+#include "vektor.h"
+#include <ctime>
+
+struct Ball
+{
+    float mass = 1;
+    int r = 10;
+    int red = 0;
+    int green = 255;
+    int blue = 0;
+    Vector2f pozicija;
+    Vector2f brzina;
+};
+
+void DrawBall (Ball ball)
+{
+        for(double k = ball.r; k > 0; --k)
+        {
+            txSetFillColor(RGB(ball.red * (1 - pow(k/ball.r, 2)), ball.green * (1 - pow(k/ball.r, 2)), ball.blue * (1 - pow(k/ball.r, 2))));
+            txSetColor(RGB(ball.red * (1 - pow(k/ball.r, 2)), ball.green * (1 - pow(k/ball.r, 2)), ball.blue * (1 - pow(k/ball.r, 2))));
+            txCircle(ball.pozicija.x + (ball.r - k)/2, ball.pozicija.y, k);
+        }
+}
+
+void DrawAllBalls(Ball* balls, int k)
+{
+    for(int i = 0; i < k; ++i)
+    {
+        DrawBall(balls[i]);
+    }
+}
+
+void ControlBall (Ball* ball)
+{
+    if (GetAsyncKeyState(VK_UP))
+    {
+        (*ball).brzina.x += 5;
+        (*ball).brzina.y +=10;
+    }
+
+    if (GetAsyncKeyState(VK_DOWN))
+    {
+        (*ball).brzina.x += 10;
+        (*ball).brzina.y += 10;
+    }
+
+    if (GetAsyncKeyState(VK_LEFT))
+    {
+        (*ball).brzina.x -= 15;
+        (*ball).brzina.y -= 10;
+    }
+    if (GetAsyncKeyState(VK_RIGHT))
+    {
+        (*ball).brzina.x -= 5;
+        (*ball).brzina.y -= 10;
+    }
+}
+
+void MoveBall(Ball &ball, const float dt)
+{
+        if (ball.pozicija.y > 600 - ball.r || ball.pozicija.y < ball.r)
+        {
+            ball.brzina.y = (-1) * ball.brzina.y;
+        }
+
+        if (ball.pozicija.x > 800 - ball.r || ball.pozicija.x < ball.r)
+        {
+            ball.brzina.x = (-1) * ball.brzina.x;
+        }
+
+        ball.pozicija.x += ball.brzina.x * dt;
+        ball.pozicija.y += ball.brzina.y * dt;
+}
+
+void MoveAllBalls(Ball* balls, int k)
+{
+    for(int i = 0; i < k; ++i)
+    {
+        MoveBall(balls[i], 0.1);
+    }
+}
+
+bool Collision(Ball &ball1, Ball &ball2)
+{
+    double distance = (pow((ball1.pozicija.x - ball2.pozicija.x), 2) + pow((ball1.pozicija.y - ball2.pozicija.y), 2));
+    
+    if (distance <= (pow(ball1.r + ball2.r, 2)))
+        {
+            return true;
+        }
+        
+    if (distance > (pow(ball1.r + ball2.r, 2)))
+        {
+            return false;
+        }
+}
+
+void SpeedChange(Ball* ball1, Ball* ball2)
+{
+    std::cout << "vx before = " << ball1 -> brzina.x << std::endl;
+
+     if (Collision(*ball1, *ball2))
+     {
+        Vector2f centre_mass = ball2 -> pozicija - ball1 -> pozicija;
+        Vector2f V1proection = normolize(centre_mass) * ((scular(ball1 -> brzina, centre_mass)) / centre_mass.len() );
+        Vector2f V2proection = normolize(centre_mass) * ((scular(ball2 -> brzina, centre_mass)) / centre_mass.len() );
+
+        ball1 -> brzina = ball1 -> brzina - V1proection;
+        ball1 -> brzina = ball1 -> brzina + V2proection;
+
+        ball2 -> brzina = ball2 -> brzina - V2proection;
+        ball2 -> brzina = ball2 -> brzina + V1proection;
+
+        if (centre_mass.len() < (ball1 -> r + ball2 -> r))
+            {
+                ball2 -> pozicija = ball2 -> pozicija + normolize(centre_mass) * ((ball1 -> r + ball2 -> r - centre_mass.len()) / 2);
+                ball1 -> pozicija = ball1 -> pozicija - normolize(centre_mass) * ((ball1 -> r + ball2 -> r - centre_mass.len()) / 2);
+            }
+    }
+
+}
+
+int main()
+{
+    txCreateWindow(800,600);
+
+    const float dt = 0.1;
+
+    Ball* balls = new Ball[9];
+
+    Ball ball1;
+    balls[0].pozicija.x = 150;
+    balls[0].pozicija.y = 150;
+    balls[0].brzina.x = 10;
+    balls[0].brzina.y = 10;
+
+    Ball ball2;
+    balls[1].pozicija.x = 160;
+    balls[1].pozicija.y = 160;
+    balls[1].brzina.x = 10;
+    balls[1].brzina.y = 20;
+
+    Ball ball3;
+    balls[2].pozicija.x = 170;
+    balls[2].pozicija.y = 150;
+    balls[2].brzina.x = 20;
+    balls[2].brzina.y = 15;
+
+    Ball ball4;
+    balls[3].pozicija.x = 100;
+    balls[3].pozicija.y = 150;
+    balls[3].brzina.x = 15;
+    balls[3].brzina.y = 15;
+
+    Ball ball5;
+    balls[4].pozicija.x = 50;
+    balls[4].pozicija.y = 60;
+    balls[4].brzina.x = 15;
+    balls[4].brzina.y = 10;
+
+    Ball ball6;
+    balls[5].pozicija.x = 300;
+    balls[5].pozicija.y = 150;
+    balls[5].brzina.x = 15;
+    balls[5].brzina.y = 10;
+
+    Ball ball7;
+    balls[6].pozicija.x = 100;
+    balls[6].pozicija.y = 400;
+    balls[6].brzina.x = 15;
+    balls[6].brzina.y = 15;
+
+    Ball ball8;
+    balls[7].pozicija.x = 30;
+    balls[7].pozicija.y = 60;
+    balls[7].brzina.x = 15;
+    balls[7].brzina.y = 15;
+
+    Ball ball9;
+    balls[8].pozicija.x = 300;
+    balls[8].pozicija.y = 300;
+    balls[8].brzina.x = 10;
+    balls[8].brzina.y = 10;
+
+    for(int k = 0; k < 10000; k++)
+    {
+
+        txSetFillColor(RGB(0, 76, 90));
+        txClear();
+        txBegin();
+        DrawAllBalls(balls, 9);
+        txEnd();
+        ControlBall(&balls[0]);
+        MoveAllBalls(balls, 9);
+        std::cout << "vx0 = " << balls[0].brzina.x << std::endl;
+
+        for(int i = 0; i < 9; i++)
+        {
+            for(int j = i; j < 9; j++)
+            {
+                if (i == j)
+                    continue;
+
+                if(Collision(balls[i], balls[j]))
+                {
+                    SpeedChange(&balls[i], &balls[j]);
+                    std::cout << "vx after = " << balls[i].brzina.x << std::endl;
+                }
+            }
+        }
+    }
+            delete[] balls;
+            return(0);
+}
