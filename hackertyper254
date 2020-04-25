@@ -1,0 +1,149 @@
+#include <fstream>
+#include <SDL/SDL.h>
+#include <GL/glut.h>
+#include <unistd.h>
+
+#define WIDTH 800
+#define HEIGHT 600
+#define LINE_HEIGHT 20
+#define NEWLINE '\n'
+#define STARTX 10
+#define STARTY 10
+#define PRINTED 3 //koliko karaktera su printovani na inputu
+
+#pragma comment(lib,"glu32.lib")
+#pragma comment(lib,"opengl32.lib")
+
+typedef struct Position
+{
+  int x;
+  double y;
+  bool pressed;
+}
+    position;
+
+void drawText(std::string text, position* current)
+{
+  double matrix[16]; // 16 doubles in stack memory
+  // prepare matrix for new text
+  glMatrixMode(GL_PROJECTION); // change the current matrix to PROJECTION
+  glGetDoublev(GL_PROJECTION_MATRIX, matrix); // get the values from PROJECTION matrix to local variable
+  glLoadIdentity(); // reset PROJECTION matrix to identity matrix
+  glOrtho(0, 800, 0, 600, 0, 5); // orthographic perspective
+  glMatrixMode(GL_MODELVIEW); // change current matrix to MODELVIEW matrix again
+  glLoadIdentity(); // reset it to identity matrix
+  glPushMatrix(); // push current state of MODELVIEW matrix to stack
+  //glLoadIdentity(); // reset it again. (may not be required, but it my convention)
+
+  // set cursor position
+  glRasterPos2i(current->x, current->y); // raster position in 2D
+
+  for(int i=0; i<text.size(); i++)
+  {
+      //if newline appears
+      if (text[i] == '\n')
+        {
+            current->x = STARTX;
+            current->y -= LINE_HEIGHT;
+            glRasterPos2i(current->x, current->y); // raster position in 2D
+        }
+      //if line is to long
+      else if (current->x >= WIDTH-STARTX*2)
+        {
+            current->x = STARTX;
+            current->y -= LINE_HEIGHT;
+            glRasterPos2i(current->x, current->y); // raster position in 2D
+            glutBitmapCharacter(GLUT_BITMAP_9_BY_15, (int)'>');
+            glutBitmapCharacter(GLUT_BITMAP_9_BY_15, (int)' '); // add > at the newline of the line
+            current->x+=9;
+        }
+      //print
+      else
+        {
+            current->x+=9;
+            glutBitmapCharacter(GLUT_BITMAP_9_BY_15, (int)text[i]); // generation of characters in our text with 9 by 15 GLU font
+        }
+  }
+
+  glPopMatrix(); // get MODELVIEW matrix value from stack
+  glMatrixMode(GL_PROJECTION); // change current matrix mode to PROJECTION
+  glLoadMatrixd(matrix); // reset
+  glMatrixMode(GL_MODELVIEW); // change current matrix mode to MODELVIEW
+}
+
+static void reshape(int width, int height)
+{
+    GLfloat h = (GLfloat) height / (GLfloat) width;
+    glViewport(0, 0, (GLint) width, (GLint) height);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective( 45.0, h, 1.0, 1000.0 );
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+}
+
+SDL_Surface *surface;
+
+int main(int argc, char **argv)
+{
+    if (SDL_Init(SDL_INIT_VIDEO || SDL_INIT_AUDIO)<0)
+    return 1;
+
+    surface = SDL_SetVideoMode(WIDTH, HEIGHT, 32, SDL_OPENGL | SDL_RESIZABLE | SDL_DOUBLEBUF);
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+    glShadeModel(GL_SMOOTH);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
+    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+    glLineWidth(1.5f);
+    glMatrixMode(GL_MODELVIEW);
+    reshape(WIDTH,HEIGHT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glColor3f(0, 1, 0);
+    gluLookAt(0,0,-10, 0,0, 3, 0, 1, 0);
+
+    SDL_Event event;
+    int keypress = 0;
+    int i=0;
+    position current;
+    current.x = STARTX;
+    current.y = HEIGHT-STARTY;
+    current.pressed = false;
+
+    std::string text;
+    std::string myText;
+// Read from the text file
+    std::ifstream MyReadFile("example.cpp");
+    while (std::getline (MyReadFile, myText))
+    {
+        text += myText + "\n";
+    }
+    MyReadFile.close();
+
+    while(!keypress)
+    {
+        while(SDL_PollEvent(&event) && !current.pressed)
+        {
+            switch (event.type)
+            {
+                case SDL_QUIT:
+                    keypress = 1;
+                    break;
+                case SDL_KEYUP:
+                    current.pressed = false;
+                    break;
+                case SDL_KEYDOWN:
+                    current.pressed = true;
+                    drawText(text.substr(i++*PRINTED,PRINTED), &current);
+                    SDL_GL_SwapBuffers();
+                    usleep(51000);
+                    current.pressed = false;
+                default:
+                break;
+            }
+        }
+    }
+    SDL_Quit();
+    return 0;
+}
